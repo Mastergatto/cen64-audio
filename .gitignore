@@ -1,0 +1,7 @@
+# Compiler speak.
+libaudio.a
+*.o
+
+# Swap files.
+*.swp
+
