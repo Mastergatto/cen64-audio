@@ -21,10 +21,12 @@ OBJECTS = $(addprefix $(OBJECT_DIR)/, $(notdir $(SOURCES:.c=.o)))
 # =============================================================================
 OBJECT_DIR=Objects
 
-BLUE=\e[0;94m
-PURPLE=\e[0;95m
-TEXTRESET=\e[0m
-YELLOW=\e[0;93m
+ECHO=/usr/bin/printf "%s\n"
+
+BLUE=$(shell tput setaf 4)
+PURPLE=$(shell tput setaf 5)
+TEXTRESET=$(shell tput sgr0)
+YELLOW=$(shell tput setaf 3)
 
 # ============================================================================
 #  Build rules and flags.
