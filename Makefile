@@ -21,8 +21,6 @@ OBJECTS = $(addprefix $(OBJECT_DIR)/, $(notdir $(SOURCES:.c=.o)))
 # =============================================================================
 OBJECT_DIR=Objects
 
-ECHO=/usr/bin/printf "%s\n"
-
 BLUE=$(shell tput setaf 4)
 PURPLE=$(shell tput setaf 5)
 TEXTRESET=$(shell tput sgr0)
@@ -31,7 +29,7 @@ YELLOW=$(shell tput setaf 3)
 # ============================================================================
 #  Build rules and flags.
 # ============================================================================
-ECHO = /bin/echo -e
+ECHO=/usr/bin/printf "%s\n"
 MKDIR = /bin/mkdir -p
 
 AR = ar
