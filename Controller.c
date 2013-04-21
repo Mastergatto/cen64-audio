@@ -26,7 +26,8 @@
 #include <string.h>
 #endif
 
-#define DACRATE_NTSC 48681812
+static void FIFOPush(struct AIFController *);
+static void FIFOPop(struct AIFController *);
 static void InitAIF(struct AIFController *);
 
 /* ============================================================================
@@ -66,11 +67,68 @@ CreateAIF(void) {
 }
 
 /* ============================================================================
+ *  CycleAIF: Lets the AI know we are cycling the machine.
+ * ========================================================================= */
+void
+CycleAIF(struct AIFController *controller) {
+  if (unlikely(controller->cyclesUntilIntr == 0)) {
+    controller->cyclesUntilIntr = (62500000 / 5) + 1;
+
+    if (controller->fifoEntryCount > 0)
+      FIFOPop(controller);
+
+    else
+      controller->regs[AI_STATUS_REG] &= ~0x40000000;
+  }
+
+  controller->cyclesUntilIntr--;
+}
+
+/* ============================================================================
  *  DestroyAIF: Releases any resources allocated for an AIF instance.
  * ========================================================================= */
 void
 DestroyAIF(struct AIFController *controller) {
   free(controller);
+}
+
+/* ============================================================================
+ *  FIFOPush: Pushes an entry onto the AI FIFO.
+ * ========================================================================= */
+static void
+FIFOPush(struct AIFController *controller) {
+  uint32_t address = controller->regs[AI_DRAM_ADDR_REG];
+  uint32_t length = controller->regs[AI_LEN_REG];
+  struct AudioFIFOEntry *fifoEntry;
+
+  fifoEntry = &controller->fifo[controller->fifoHeadPosition];
+  fifoEntry->address = address;
+  fifoEntry->length = length;
+
+  controller->fifoHeadPosition++;
+  controller->fifoEntryCount++;
+
+  if (controller->fifoHeadPosition == AUDIO_DMA_DEPTH)
+    controller->fifoHeadPosition = 0;
+
+  if (controller->fifoEntryCount == AUDIO_DMA_DEPTH)
+    controller->regs[AI_STATUS_REG] |= 0x80000001;
+
+  if (!(controller->regs[AI_STATUS_REG] & 0x40000000))
+    BusRaiseRCPInterrupt(controller->bus, MI_INTR_AI);
+}
+
+/* ============================================================================
+ *  FIFOPop: Pops an entry off the AI FIFO.
+ * ========================================================================= */
+static void
+FIFOPop(struct AIFController *controller) {
+  controller->fifoEntryCount--;
+
+  if (controller->fifoEntryCount < AUDIO_DMA_DEPTH) {
+    controller->regs[AI_STATUS_REG] &= ~0x80000001;
+    BusClearRCPInterrupt(controller->bus, MI_INTR_AI);
+  }
 }
 
 /* ============================================================================
@@ -139,11 +197,7 @@ AIRegWrite(void *_controller, uint32_t address, void *_data) {
 
   case AI_LEN_REG:
     controller->regs[AI_LEN_REG] = *data & 0x3FFFF;
-    controller->regs[AI_STATUS_REG] |= 0x80000001;
-
-    if (!(controller->regs[AI_STATUS_REG] & 0x40000000))
-      BusRaiseRCPInterrupt(controller->bus, MI_INTR_AI);
-
+    FIFOPush(controller);
     break;
 
   case AI_STATUS_REG:

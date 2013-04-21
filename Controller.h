@@ -13,6 +13,14 @@
 #include "Address.h"
 #include "Common.h"
 
+#define AUDIO_DMA_DEPTH 2
+#define DACRATE_NTSC 48681812
+
+struct AudioFIFOEntry {
+  uint32_t address;
+  uint32_t length;
+};
+
 enum AIRegister {
 #define X(reg) reg,
 #include "Registers.md"
@@ -30,7 +38,12 @@ struct AIFController {
   struct BusController *bus;
 
   const uint8_t *rom;
+  unsigned long long cyclesUntilIntr;
   uint32_t regs[NUM_AI_REGISTERS];
+
+  struct AudioFIFOEntry fifo[AUDIO_DMA_DEPTH];
+  unsigned fifoHeadPosition;
+  unsigned fifoEntryCount;
 };
 
 struct AIFController *CreateAIF(void);
