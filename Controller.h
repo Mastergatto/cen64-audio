@@ -42,7 +42,8 @@ struct AIFController {
   uint32_t regs[NUM_AI_REGISTERS];
 
   struct AudioFIFOEntry fifo[AUDIO_DMA_DEPTH];
-  unsigned fifoHeadPosition;
+  unsigned fifoReadPosition;
+  unsigned fifoWritePosition;
   unsigned fifoEntryCount;
 };
 

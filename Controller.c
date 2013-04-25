@@ -74,8 +74,10 @@ CycleAIF(struct AIFController *controller) {
   if (unlikely(controller->cyclesUntilIntr == 0)) {
     controller->cyclesUntilIntr = (62500000 / 5) + 1;
 
-    if (controller->fifoEntryCount > 0)
+    if (controller->fifoEntryCount > 0) {
+      BusRaiseRCPInterrupt(controller->bus, MI_INTR_AI);
       FIFOPop(controller);
+    }
 
     else
       controller->regs[AI_STATUS_REG] &= ~0x40000000;
@@ -101,21 +103,24 @@ FIFOPush(struct AIFController *controller) {
   uint32_t length = controller->regs[AI_LEN_REG];
   struct AudioFIFOEntry *fifoEntry;
 
-  fifoEntry = &controller->fifo[controller->fifoHeadPosition];
+  assert(controller->fifoWritePosition < AUDIO_DMA_DEPTH);
+  fifoEntry = &controller->fifo[controller->fifoWritePosition];
   fifoEntry->address = address;
   fifoEntry->length = length;
 
-  controller->fifoHeadPosition++;
+  controller->fifoWritePosition++;
   controller->fifoEntryCount++;
 
-  if (controller->fifoHeadPosition == AUDIO_DMA_DEPTH)
-    controller->fifoHeadPosition = 0;
+  if (controller->fifoWritePosition == AUDIO_DMA_DEPTH)
+    controller->fifoWritePosition = 0;
 
   if (controller->fifoEntryCount == AUDIO_DMA_DEPTH)
     controller->regs[AI_STATUS_REG] |= 0x80000001;
 
-  if (!(controller->regs[AI_STATUS_REG] & 0x40000000))
+  if (!(controller->regs[AI_STATUS_REG] & 0x40000000)) {
     BusRaiseRCPInterrupt(controller->bus, MI_INTR_AI);
+    controller->regs[AI_STATUS_REG] |= 0x40000000;
+  }
 }
 
 /* ============================================================================
@@ -124,10 +129,14 @@ FIFOPush(struct AIFController *controller) {
 static void
 FIFOPop(struct AIFController *controller) {
   controller->fifoEntryCount--;
+  controller->fifoReadPosition++;
 
-  if (controller->fifoEntryCount < AUDIO_DMA_DEPTH) {
+  if (controller->fifoReadPosition >= AUDIO_DMA_DEPTH)
+    controller->fifoReadPosition = 0;
+
+  else if (controller->fifoReadPosition < AUDIO_DMA_DEPTH) {
+    BusRaiseRCPInterrupt(controller->bus, MI_INTR_AI);
     controller->regs[AI_STATUS_REG] &= ~0x80000001;
-    BusClearRCPInterrupt(controller->bus, MI_INTR_AI);
   }
 }
 
