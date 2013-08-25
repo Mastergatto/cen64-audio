@@ -164,18 +164,11 @@ AIRegRead(void *_controller, uint32_t address, void *_data) {
 
   switch(reg) {
   case AI_LEN_REG:
-    if (controller->regs[AI_STATUS_REG] & 0x80000001)
-      *data = controller->regs[AI_LEN_REG];
+    *data = 0;
+    break;
 
-    else if (controller->regs[AI_STATUS_REG] & 0x40000000) {
-      uint32_t rate = controller->regs[AI_DACRATE_REG] + 1;
-      unsigned samples = (double) DACRATE_NTSC / rate;
-      *data = samples * 5 /* seconds */ * 4;
-    }
-
-    else
-      *data = 0;
-
+  case AI_STATUS_REG:
+    *data = 0x80000001;
     break;
 
   default:
