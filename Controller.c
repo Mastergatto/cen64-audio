@@ -70,21 +70,7 @@ CreateAIF(void) {
  *  CycleAIF: Lets the AI know we are cycling the machine.
  * ========================================================================= */
 void
-CycleAIF(struct AIFController *controller) {
-  if (unlikely(controller->cyclesUntilIntr == 0)) {
-    controller->cyclesUntilIntr = (62500000 / 5) + 1;
-
-    if (controller->fifoEntryCount > 0) {
-      BusRaiseRCPInterrupt(controller->bus, MI_INTR_AI);
-      FIFOPop(controller);
-    }
-
-    else
-      controller->regs[AI_STATUS_REG] &= ~0x40000000;
-  }
-
-  controller->cyclesUntilIntr--;
-}
+CycleAIF(struct AIFController *controller) {}
 
 /* ============================================================================
  *  DestroyAIF: Releases any resources allocated for an AIF instance.
