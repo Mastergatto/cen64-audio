@@ -58,8 +58,8 @@ DOXYGEN = doxygen
 AUDIO_FLAGS =
 WARNINGS = -Wall -Wextra -pedantic
 
-COMMON_CFLAGS = $(WARNINGS) $(AUDIO_FLAGS) -std=c99 -march=native -I.
-COMMON_CXXFLAGS = $(WARNINGS) $(AUDIO_FLAGS) -std=c++0x -march=native -I.
+COMMON_CFLAGS = $(WARNINGS) $(AUDIO_FLAGS) -std=c99 -march=native -I. -I../include
+COMMON_CXXFLAGS = $(WARNINGS) $(AUDIO_FLAGS) -std=c++0x -march=native -I. -I../include
 OPTIMIZATION_FLAGS = -flto -fuse-linker-plugin -fdata-sections \
 	-ffunction-sections -funsafe-loop-optimizations
 
