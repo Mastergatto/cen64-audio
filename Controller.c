@@ -26,6 +26,9 @@
 #include <string.h>
 #endif
 
+#include <AL/al.h>
+#include <AL/alc.h>
+
 static void FIFOPush(struct AIFController *);
 static void FIFOPop(struct AIFController *);
 static void InitAIF(struct AIFController *);
@@ -77,6 +80,12 @@ CycleAIF(struct AIFController *controller) {}
  * ========================================================================= */
 void
 DestroyAIF(struct AIFController *controller) {
+  if (controller->device) {
+    alcMakeContextCurrent(NULL);
+    alcDestroyContext(controller->context);
+    alcCloseDevice(controller->device);
+  }
+
   free(controller);
 }
 
@@ -133,6 +142,24 @@ static void
 InitAIF(struct AIFController *controller) {
   debug("Initializing AIF.");
   memset(controller, 0, sizeof(*controller));
+
+  /* Try to initialize OpenAL; return if we can't. */
+  if ((controller->device = alcOpenDevice(NULL)) == NULL) {
+    fprintf(stderr, "Failed to initialize OpenAL.\n");
+    return;
+  }
+
+  /* Grab some contexts and things for audio. */
+  if ((controller->context =
+    alcCreateContext(controller->device, NULL)) == NULL) {
+    fprintf(stderr, "Failed to create an OpenAL context.\n");
+
+    alcCloseDevice(controller->device);
+    controller->device = NULL;
+    return;
+  }
+
+  alcMakeContextCurrent(controller->context);
 }
 
 /* ============================================================================

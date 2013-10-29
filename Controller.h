@@ -12,6 +12,8 @@
 #define __AIF__CONTROLLER_H__
 #include "Address.h"
 #include "Common.h"
+#include <AL/al.h>
+#include <AL/alc.h>
 
 #define AUDIO_DMA_DEPTH 2
 #define DACRATE_NTSC 48681812
@@ -35,8 +37,10 @@ extern const char *AIRegisterMnemonics[NUM_AI_REGISTERS];
 struct BusController;
 
 struct AIFController {
-  struct BusController *bus;
+  ALCcontext *context;
+  ALCdevice *device;
 
+  struct BusController *bus;
   const uint8_t *rom;
   unsigned long long cyclesUntilIntr;
   uint32_t regs[NUM_AI_REGISTERS];
