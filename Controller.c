@@ -81,6 +81,9 @@ CycleAIF(struct AIFController *controller) {}
 void
 DestroyAIF(struct AIFController *controller) {
   if (controller->device) {
+    alDeleteSources(1, &controller->source);
+    alDeleteBuffers(AUDIO_DMA_DEPTH, controller->buffers);
+
     alcMakeContextCurrent(NULL);
     alcDestroyContext(controller->context);
     alcCloseDevice(controller->device);
@@ -160,6 +163,21 @@ InitAIF(struct AIFController *controller) {
   }
 
   alcMakeContextCurrent(controller->context);
+  alGenBuffers(AUDIO_DMA_DEPTH, controller->buffers);
+  alGenSources(1, &controller->source);
+
+  if (alGetError() != AL_NO_ERROR) {
+    fprintf(stderr, "Failed to generate OpenAL entities.\n");
+
+    alDeleteSources(1, &controller->source);
+    alDeleteBuffers(AUDIO_DMA_DEPTH, controller->buffers);
+
+    alcMakeContextCurrent(NULL);
+    alcDestroyContext(controller->context);
+    alcCloseDevice(controller->device);
+    controller->device = NULL;
+    return;
+  }
 }
 
 /* ============================================================================

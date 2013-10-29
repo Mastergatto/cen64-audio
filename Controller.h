@@ -45,6 +45,7 @@ struct AIFController {
   unsigned long long cyclesUntilIntr;
   uint32_t regs[NUM_AI_REGISTERS];
 
+  ALuint source, buffers[AUDIO_DMA_DEPTH];
   struct AudioFIFOEntry fifo[AUDIO_DMA_DEPTH];
   unsigned fifoReadPosition;
   unsigned fifoWritePosition;
